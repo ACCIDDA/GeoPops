@@ -31,6 +31,15 @@ def tryJSON(filename):
         d = {}
     return d
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+config_path = os.path.join(BASE_DIR, "config.json")
+if not os.path.exists(config_path):
+    raise FileNotFoundError(f"config.json file not found at {config_path}. Please create this file with the required configuration.")
+
+with open(config_path, "r") as f:
+    config = json.load(f)
+
 ## round a pandas Series to integers while preserving sum
 ## (using largest-remainder method)
 def lrRound(v):
@@ -127,11 +136,11 @@ def read_cbp(counties):
     cbp = cbp_US[(cbp_US['naics']=='------')]
     return cbp[cbp['county'].isin(counties)].set_index('county').iloc[:,3:].copy(deep=True)
 
-def read_sch_data(geos=None):
-    sch_geo = pd.read_excel(glob(os.path.join("school","EDGE_GEOCODE_PUBLICSCH_*.xlsx"))[0],dtype=str) ## has correct locations
-    sch_dir = pd.read_csv(glob(os.path.join("school","ccd_*029*.[c|z]??"))[0],dtype=str,encoding='Latin-1') ## has errors in location
-    sch_staff = pd.read_csv(glob(os.path.join("school","ccd_*059*.[c|z]??"))[0],dtype=str,encoding='Latin-1') ## full-time-equivalent # teachers
-    sch_mem_raw = pd.read_csv(glob(os.path.join("school","ccd_*052*.[c|z]??"))[0],dtype=str,encoding='Latin-1') ## reported student counts
+def read_sch_data(geos=None, main_year=None):
+    sch_geo = pd.read_excel(glob(os.path.join("school",str(main_year),"EDGE_GEOCODE_PUBLICSCH_*.xlsx"))[0],dtype=str) ## has correct locations
+    sch_dir = pd.read_csv(glob(os.path.join("school",str(main_year),"ccd_*029*.[c|z]??"))[0],dtype=str,encoding='Latin-1') ## has errors in location
+    sch_staff = pd.read_csv(glob(os.path.join("school",str(main_year),"ccd_*059*.[c|z]??"))[0],dtype=str,encoding='Latin-1') ## full-time-equivalent # teachers
+    sch_mem_raw = pd.read_csv(glob(os.path.join("school",str(main_year),"ccd_*052*.[c|z]??"))[0],dtype=str,encoding='Latin-1') ## reported student counts
     sch_mem = sch_mem_raw[sch_mem_raw['TOTAL_INDICATOR']=='Education Unit Total'].copy(deep=True)
     sch_mem['STUDENTS'] = sch_mem['STUDENT_COUNT'].astype("Int64")
     sch_geo.set_index('NCESSCH',inplace=True)
@@ -617,55 +626,60 @@ def generate_gq(geos, df_adults_in_hh, geo_xwalk, p_summary, ind_codes, occ_code
 
     ## from previous decennial census
     ##   institutionalized vs non-inst gq by age (not available in ACS)
-    P43 = read_decennial('P43', geos)
+    decennial_year = config["decennial_year"]
+    if decennial_year == 2020:
+        code = 'P18'
+    else:
+        code = 'P43'
+    dec_df = read_decennial(code, geos)
+    dec_df.to_csv(os.path.join('census','dec_df.csv'))
+    dec_df = dec_df.loc[dec_df[code]>0 ,[code,f'{code}:Male:Under 18 years',
+    f'{code}:Male:Under 18 years:Institutionalized population (101-106, 201-203, 301, 401-405)',
+    f'{code}:Male:Under 18 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)',
+    f'{code}:Male:18 to 64 years',
+    f'{code}:Male:18 to 64 years:Institutionalized population (101-106, 201-203, 301, 401-405)',
+    f'{code}:Male:18 to 64 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)',
+    f'{code}:Male:18 to 64 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904):Military quarters (601-602)',
+    f'{code}:Male:65 years and over',
+    f'{code}:Male:65 years and over:Institutionalized population (101-106, 201-203, 301, 401-405)',
+    f'{code}:Male:65 years and over:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)',
+    f'{code}:Female', f'{code}:Female:Under 18 years',
+    f'{code}:Female:Under 18 years:Institutionalized population (101-106, 201-203, 301, 401-405)',
+    f'{code}:Female:Under 18 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)',
+    f'{code}:Female:18 to 64 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904):Military quarters (601-602)',
+    f'{code}:Female:18 to 64 years',
+    f'{code}:Female:18 to 64 years:Institutionalized population (101-106, 201-203, 301, 401-405)',
+    f'{code}:Female:18 to 64 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)',
+    f'{code}:Female:65 years and over',
+    f'{code}:Female:65 years and over:Institutionalized population (101-106, 201-203, 301, 401-405)',
+    f'{code}:Female:65 years and over:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)']].copy(deep=True)
 
-    P43 = P43.loc[P43['P43']>0 ,['P43','P43:Male:Under 18 years',
-    'P43:Male:Under 18 years:Institutionalized population (101-106, 201-203, 301, 401-405)',
-    'P43:Male:Under 18 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)',
-    'P43:Male:18 to 64 years',
-    'P43:Male:18 to 64 years:Institutionalized population (101-106, 201-203, 301, 401-405)',
-    'P43:Male:18 to 64 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)',
-    'P43:Male:18 to 64 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904):Military quarters (601-602)',
-    'P43:Male:65 years and over',
-    'P43:Male:65 years and over:Institutionalized population (101-106, 201-203, 301, 401-405)',
-    'P43:Male:65 years and over:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)',
-    'P43:Female', 'P43:Female:Under 18 years',
-    'P43:Female:Under 18 years:Institutionalized population (101-106, 201-203, 301, 401-405)',
-    'P43:Female:Under 18 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)',
-    'P43:Female:18 to 64 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904):Military quarters (601-602)',
-    'P43:Female:18 to 64 years',
-    'P43:Female:18 to 64 years:Institutionalized population (101-106, 201-203, 301, 401-405)',
-    'P43:Female:18 to 64 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)',
-    'P43:Female:65 years and over',
-    'P43:Female:65 years and over:Institutionalized population (101-106, 201-203, 301, 401-405)',
-    'P43:Female:65 years and over:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)']].copy(deep=True)
+    dec_df['u18_gq'] = dec_df[f'{code}:Male:Under 18 years'] + dec_df[f'{code}:Female:Under 18 years']
+    dec_df['18_64_gq'] = dec_df[f'{code}:Male:18 to 64 years'] + dec_df[f'{code}:Female:18 to 64 years']
+    dec_df['65o_gq'] = dec_df[f'{code}:Male:65 years and over'] + dec_df[f'{code}:Female:65 years and over']
 
-    P43['u18_gq'] = P43['P43:Male:Under 18 years'] + P43['P43:Female:Under 18 years']
-    P43['18_64_gq'] = P43['P43:Male:18 to 64 years'] + P43['P43:Female:18 to 64 years']
-    P43['65o_gq'] = P43['P43:Male:65 years and over'] + P43['P43:Female:65 years and over']
+    dec_df['u18_inst'] = (dec_df[f'{code}:Male:Under 18 years:Institutionalized population (101-106, 201-203, 301, 401-405)'] +
+        dec_df[f'{code}:Female:Under 18 years:Institutionalized population (101-106, 201-203, 301, 401-405)'])
+    dec_df['u18_noninst'] = (dec_df[f'{code}:Male:Under 18 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)'] +
+        dec_df[f'{code}:Female:Under 18 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)'])
 
-    P43['u18_inst'] = (P43['P43:Male:Under 18 years:Institutionalized population (101-106, 201-203, 301, 401-405)'] +
-        P43['P43:Female:Under 18 years:Institutionalized population (101-106, 201-203, 301, 401-405)'])
-    P43['u18_noninst'] = (P43['P43:Male:Under 18 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)'] +
-        P43['P43:Female:Under 18 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)'])
+    dec_df['18_64_inst'] = (dec_df[f'{code}:Male:18 to 64 years:Institutionalized population (101-106, 201-203, 301, 401-405)'] +
+        dec_df[f'{code}:Female:18 to 64 years:Institutionalized population (101-106, 201-203, 301, 401-405)'])
+    dec_df['18_64_noninst'] = (dec_df[f'{code}:Male:18 to 64 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)'] +
+        dec_df[f'{code}:Female:18 to 64 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)'])
+    dec_df['18_64_noninst_mil'] = (dec_df[f'{code}:Male:18 to 64 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904):Military quarters (601-602)'] +
+        dec_df[f'{code}:Female:18 to 64 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904):Military quarters (601-602)'])
+    dec_df['18_64_noninst_civil'] = (dec_df['18_64_noninst'] - dec_df['18_64_noninst_mil'])
 
-    P43['18_64_inst'] = (P43['P43:Male:18 to 64 years:Institutionalized population (101-106, 201-203, 301, 401-405)'] +
-        P43['P43:Female:18 to 64 years:Institutionalized population (101-106, 201-203, 301, 401-405)'])
-    P43['18_64_noninst'] = (P43['P43:Male:18 to 64 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)'] +
-        P43['P43:Female:18 to 64 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)'])
-    P43['18_64_noninst_mil'] = (P43['P43:Male:18 to 64 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904):Military quarters (601-602)'] +
-        P43['P43:Female:18 to 64 years:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904):Military quarters (601-602)'])
-    P43['18_64_noninst_civil'] = (P43['18_64_noninst'] - P43['18_64_noninst_mil'])
-
-    P43['65o_inst'] = (P43['P43:Male:65 years and over:Institutionalized population (101-106, 201-203, 301, 401-405)'] +
-        P43['P43:Female:65 years and over:Institutionalized population (101-106, 201-203, 301, 401-405)'])
-    P43['65o_noninst'] = (P43['P43:Male:65 years and over:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)'] +
-        P43['P43:Female:65 years and over:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)'])
+    dec_df['65o_inst'] = (dec_df[f'{code}:Male:65 years and over:Institutionalized population (101-106, 201-203, 301, 401-405)'] +
+        dec_df[f'{code}:Female:65 years and over:Institutionalized population (101-106, 201-203, 301, 401-405)'])
+    dec_df['65o_noninst'] = (dec_df[f'{code}:Male:65 years and over:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)'] +
+        dec_df[f'{code}:Female:65 years and over:Noninstitutionalized population (501, 601-602, 701-702, 704, 706, 801-802, 900-901, 903-904)'])
 
     ## will use previous census proportions with ACS counts
-    census_gq_u18 = P43.loc[P43['u18_gq']>0, ['u18_gq','u18_inst','u18_noninst']].copy(deep=True)
-    census_gq_18_64 = P43.loc[P43['18_64_gq']>0, ['18_64_gq','18_64_inst','18_64_noninst','18_64_noninst_civil','18_64_noninst_mil']].copy(deep=True)
-    census_gq_65o = P43.loc[P43['65o_gq']>0, ['65o_gq','65o_inst','65o_noninst']].copy(deep=True)
+    census_gq_u18 = dec_df.loc[dec_df['u18_gq']>0, ['u18_gq','u18_inst','u18_noninst']].copy(deep=True)
+    census_gq_18_64 = dec_df.loc[dec_df['18_64_gq']>0, ['18_64_gq','18_64_inst','18_64_noninst','18_64_noninst_civil','18_64_noninst_mil']].copy(deep=True)
+    census_gq_65o = dec_df.loc[dec_df['65o_gq']>0, ['65o_gq','65o_inst','65o_noninst']].copy(deep=True)
     census_gq_u18['p_u18_inst'] = census_gq_u18['u18_inst'] / census_gq_u18['u18_gq']
     census_gq_18_64['p_18_64_inst'] = census_gq_18_64['18_64_inst'] / census_gq_18_64['18_64_gq']
     census_gq_18_64['p_18_64_noninst_civil'] = census_gq_18_64['18_64_noninst_civil'] / census_gq_18_64['18_64_gq']
@@ -815,10 +829,43 @@ def read_occ_df(geos, occ_codes):
     return occ_df
 
 
-##
-## ACS, census block group, from data.census.gov
-## put each state in its own folder inside folder named "census"
-##
+# ##
+# ## ACS, census block group, from data.census.gov
+# ## put each state in its own folder inside folder named "census"
+# ##
+# def generate_targets(target_columns, geos, geo_xwalk, gq_stats, inc_cats, inc_cols, ind_codes, occ_codes):
+#     print("reading census data")
+
+#     ##
+#     ## a couple of cbgs in the ACS aren't in the tract-to-puma xwalk
+#     ## this shouldn't happen, as ACS -2019 uses the 2010 cbg boundaries
+#     ## drop them from the synth pop, I guess?
+#     ## (they're also missing from the OD commute data and from geocorr2018)
+#     ##
+#     has_puma_idx = geo_xwalk.index[~geo_xwalk['st_puma'].isna()]
+
+#     ## family / nonfamily households by size
+#     B11016 = read_acs('B11016',geos)
+    
+#     ############### START HERE ################
+#     # B11012
+#     # 0.	['', 
+#     # 1.	'With children of the householder under 18 years', 
+#     # 2.	'With no children of the householder under 18 years', 
+#     # 3.	'', 
+#     # 4.	'With children of the householder under 18 years', 
+#     # 5.	'With no children of the householder under 18 years', 
+#     # 6.	'', 
+#     # 7.	'Living alone', 
+#     # 8.	'With children of the householder under 18 years', 
+#     # 9.	'With relatives, no children of the householder under 18 years', 
+#     # 10.	'With only nonrelatives present', 
+#     # 11.	'', 
+#     # 12.	'Living alone', 
+#     # 13.	'With children of the householder under 18 years', 
+#     # 14.	'With relatives, no children of the householder under 18 years', 
+#     # 15.	'With only nonrelatives present']
+
 def generate_targets(target_columns, geos, geo_xwalk, gq_stats, inc_cats, inc_cols, ind_codes, occ_codes):
     print("reading census data")
 
@@ -834,6 +881,45 @@ def generate_targets(target_columns, geos, geo_xwalk, gq_stats, inc_cats, inc_co
     B11016 = read_acs('B11016',geos)
     ## household types married/cohab/single/alone/own_ch_u18/other_rels/only_nonrels
     B11012 = read_acs('B11012',geos)
+    
+    # Make a list of column names for B11012. Wording is different in 2019 and 2020.
+    B11012_lst = [col.split(':')[2] for col in B11012.columns if len(col.split(':')) > 2]
+    # print('***** B11012_lst ******', B11012_lst)
+    #2019
+    # 0 ['', 
+    # 1 'With own children under 18 years', 
+    # 2 'With no own children under 18 years', 
+    # 3 '', 
+    # 4 'With own children of the householder under 18 years', 
+    # 5 'With no own children of the householder under 18 years', 
+    # 6 '', 
+    # 7 'Living alone', 
+    # 8 'With own children under 18 years', 
+    # 9 'With relatives, no own children under 18 years', 
+    # 10 'With only nonrelatives present', 
+    # 11 '', 
+    # 12 'Living alone', 
+    # 13 'With own children under 18 years', 
+    # 14 'With relatives, no own children under 18 years', 
+    # 15 'With only nonrelatives present']
+    #2020
+    # 0 ['', 
+    # 1 'With children of the householder under 18 years', 
+    # 2 'With no children of the householder under 18 years', 
+    # 3 '', 
+    # 4 'With children of the householder under 18 years', 
+    # 5 'With no children of the householder under 18 years', 
+    # 6 '', 
+    # 7 'Living alone', 
+    # 8 'With children of the householder under 18 years', 
+    # 9 'With relatives, no children of the householder under 18 years', 
+    # 10 'With only nonrelatives present', 
+    # 11 '', 
+    # 12 'Living alone', 
+    # 13 'With children of the householder under 18 years', 
+    # 14 'With relatives, no children of the householder under 18 years', 
+    # 15 'With only nonrelatives present']
+    
     ## family households, by # workers _in family_ (not other workers in hh), presence of own_ch_u18, and marriage status
     B23009 = read_acs('B23009',geos)
     ## family households, by marriage status and presence of _related_ children in age groups
@@ -878,20 +964,22 @@ def generate_targets(target_columns, geos, geo_xwalk, gq_stats, inc_cats, inc_co
             B11004[':'.join(['B11004','Other family:Male householder, no spouse present:With related children of the householder under 18 years',x])] + \
             B11004[':'.join(['B11004','Other family:Female householder, no spouse present:With related children of the householder under 18 years',x])]
 
-    for x in ['Living alone','With own children under 18 years','With relatives, no own children under 18 years','With only nonrelatives present']:
+    # 2019 and 2020 have slightly different wording so pull from B11012_lst
+    # Ex 2019: for x in ['Living alone','With own children under 18 years','With relatives, no own children under 18 years','With only nonrelatives present']:      
+    for x in [B11012_lst[12],B11012_lst[13],B11012_lst[14],B11012_lst[15]]:
         B11012[':'.join(['B11012','Single householder',x])] = \
             B11012[':'.join(['B11012','Female householder, no spouse or partner present',x])] + \
             B11012[':'.join(['B11012','Male householder, no spouse or partner present',x])]
-
+            
     ## combine married and cohab households
-    B11012['B11012:Two-partner household:With own children under 18 years'] = \
-        B11012['B11012:Married-couple household:With own children under 18 years'] + \
-        B11012['B11012:Cohabiting couple household:With own children of the householder under 18 years']
+    B11012['B11012:Two-partner household:With children of the householder under 18 years'] = \
+        B11012[f'B11012:Married-couple household:{B11012_lst[1]}'] + \
+        B11012[f'B11012:Cohabiting couple household:{B11012_lst[4]}'] # With own children of the householder under 18 years
 
-    B11012['B11012:Two-partner household:With no own children under 18 years'] = \
-        B11012['B11012:Married-couple household:With no own children under 18 years'] + \
-        B11012['B11012:Cohabiting couple household:With no own children of the householder under 18 years']
-
+    B11012['B11012:Two-partner household:With no children of the householder under 18 years'] = \
+        B11012[f'B11012:Married-couple household:{B11012_lst[2]}'] + \
+        B11012[f'B11012:Cohabiting couple household:{B11012_lst[5]}'] # With no own children of the householder under 18 years
+            
     ## combine married and unmarried partners
     B09021['B09021:Householder living with partner or partner of householder'] = \
         B09021['B09021:Householder living with spouse or spouse of householder'] + B09021['B09021:Householder living with unmarried partner or unmarried partner of householder']
@@ -1348,14 +1436,13 @@ def generate_work_sizes():
 ## fields explained: https://nces.ed.gov/ccd/data/txt/sc132alay.txt
 
 ## TODO: add private schools https://nces.ed.gov/surveys/pss/index.asp
-def generate_schools(geos):
+def generate_schools(geos, main_year):
     print("reading school data")
-
-    schools = read_sch_data(geos)
+    schools = read_sch_data(geos, main_year)
     schools.to_csv(os.path.join('processed','schools.csv'))
 
     ## school geo data
-    fname = glob(os.path.join("school","Shape*","EDGE_GEOCODE*.shp"))[0]
+    fname = glob(os.path.join("school",str(main_year),"Shape*","EDGE_GEOCODE*.shp"))[0]
     sch_lon_lat_pts = gpd.read_file(fname).set_index('NCESSCH')['geometry']
     schools = pd.merge(sch_lon_lat_pts, schools, left_index=True, right_index=True)
     ## location in projection UTM 18N coords
@@ -1448,6 +1535,7 @@ def main():
     ## read states/counties to include
     geos = dgeo.get("geos", d.get("geos",None))
     commute_states = dgeo.get("commute_states", d.get("commute_states",None))
+    main_year = d.get("main_year", d.get("main_year",None))
 
     ## read ADJINC
     ADJINC = d.get("inc_adj",1.010145)
@@ -1459,6 +1547,10 @@ def main():
     ## additional individual (boolean) traits generated in read_psamp() to include in p_samples.csv summary
     more_summary_cols = d.get("additional_traits",
                               ['sch_public','sch_private','female','race_black_alone','white_non_hispanic','hispanic'])
+
+    # Make a list of column names for B11012. Wording is different in 2019 and 2020.
+    B11012 = read_acs('B11012',geos)
+    B11012_lst = [col.split(':')[2] for col in B11012.columns if len(col.split(':')) > 2]
 
     ## which census columns to match in synth pop
     ##  read from census or generated in generate_targets()
@@ -1502,13 +1594,13 @@ def main():
         'B11004:Other family:Unmarried householder:With related children of the householder under 18 years:6 to 17 years only',
         'B11004:Other family:Unmarried householder:No related children of the householder under 18 years',
         ## covers unmarried partners and married-couple families:
-        'B11012:Two-partner household:With own children under 18 years',
-        'B11012:Two-partner household:With no own children under 18 years',
+        'B11012:Two-partner household:With children of the householder under 18 years',
+        'B11012:Two-partner household:With no children of the householder under 18 years',
         ## various types of non-partner households:
-        'B11012:Single householder:Living alone',
-        'B11012:Single householder:With own children under 18 years',
-        'B11012:Single householder:With relatives, no own children under 18 years',
-        'B11012:Single householder:With only nonrelatives present',
+        f'B11012:Single householder:{B11012_lst[12]}', # wording is different in 2019 and 2020
+        f'B11012:Single householder:{B11012_lst[13]}',
+        f'B11012:Single householder:{B11012_lst[14]}',
+        f'B11012:Single householder:{B11012_lst[15]}',
         'B09018:', ## total children u18 in households, any relationship
         'B09018:Grandchild', ## under 18 (need this to sample multi-gen households)
         ## covers all adults in households:
@@ -1616,7 +1708,7 @@ def main():
     generate_targets(target_columns, geos, geo_xwalk, gq_stats, inc_cats, inc_cols, ind_codes, occ_codes)
     calc_commute_marginals(geos, ind_codes, ind_keys, commute_states)
     generate_work_sizes()
-    generate_schools(geos)
+    generate_schools(geos, main_year)
 
     print("")
     print("done")
