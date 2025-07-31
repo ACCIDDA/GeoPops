@@ -24,7 +24,7 @@ synthpop.jl
 export_synthpop.jl
 export_network.jl
 ```
-`CO.jl` searches for an optimal combination of samples to match Census data. `synthpop.jl` assigns individuals to schools and workplaces and connects them within these settings using stochastic block modeling. If you want to continue in Julia, the population and contact networks are serialized in the folder "jlse". `export_synthpop.jl` and `export_network.jl` export the population as mtx and csv files into the folder `pop_export`. Then you can process your files to be compatible with the open-source agent-based modeling software Starsim by running the following line in Python:
+`CO.jl` searches for an optimal combination of samples to match Census data. `synthpop.jl` assigns individuals to schools and workplaces and connects them within these settings using stochastic block modeling. If you want to continue in Julia, the population and contact networks are serialized in the folder "jlse". `export_synthpop.jl` and `export_network.jl` export the population as mtx and csv files into the folder "pop_export". Then you can process your files to be compatible with the open-source agent-based modeling software Starsim by running the following line in Python:
 ```
 gps.starsim()
 ```
