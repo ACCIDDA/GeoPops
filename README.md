@@ -1,231 +1,34 @@
-### Geographically REAlistic SYnthetic POPulation using Combinatorial Optimization
-
-![logo](greasypop-logo.png)
-
-
-* generates a synthetic population (people, households, schools, workplaces) from US census data for a specified region, at census block group (CBG) resolution
-* generates a synthetic contact network of regular household, school, and work contacts
-* this version groups people into workplaces by industry ( for previous version(s) see Releases --> )
-
-citation: Tulchinsky, A. Y., Haghpanah, F., Hamilton, A., Kipshidze, N., & Klein, E. Y. (2024). Generating geographically and economically realistic large-scale synthetic contact networks: A general method using publicly available data (arXiv:2406.14698). arXiv. http://arxiv.org/abs/2406.14698
-
-## files in this project
-
-    geo.json - specify the region for which to generate the synth pop
-    config.json - misc other settings
-    download_data.R - script to download data from census API
-    pull_datasets.R - data download functions
-    census.py - processes input data; converts census and PUMS to a common format; extracts school and workplace data needed for synthesis
-    CO.jl - performs combinatorial optimization: selects households for each CBG from microdata samples (PUMS)
-    synthpop.jl - script that calls functions for population synthesis from the files below
-    households.jl - fills each household from CO.jl with people generated from PUMS data; also creates group quarters (GQ)
-    schools.jl - reads school data prepared by census.py and assigns students created in households.jl
-    workplaces.jl - creates workplaces based on data from census.py and assigns workers created in households.jl; also assigns teachers to schools and staff to GQ's
-    netw.jl - generates synthetic contact network
-    utils.jl, fileutils.jl - various utility functions
-    export_synthpop.jl - exports synth pop to csv
-    export_network.jl - exports contact network to mtx
-
-# how to use
-
-### 1. for automated data download:
-#### (downloads 2019 ACS, PUMS, and LODES data)
-#### (see below for manual download instructions)
-
-#### edit geo.json
-
-    geos: list of areas to include in the synth pop
-    only CBGs starting with these strings will be included
-    (two chars for state FIPS, 5 chars for county, more for sub-county; any combination is ok)
-
-    commute_states: list of state FIPS that are plausibly within commute distance of the synth pop
-
-    use_pums: list of state FIPS whose microdata should be used when generating cbgs by urban/rural proportion
-    (usually ok to leave this out; see methods paper for details)
-
-#### install R and required packages:
-
-    R 4.4.1, rjson, here, tidyverse, data.table, censusapi, tidycensus, lehdr, usmap, geojsonio
-
-#### obtain a census API key https://api.census.gov/data/key_signup.html
-#### paste it into download_data.R
-
-    key = "YOUR_CENSUS_API_KEY"
-
-#### run script:
-
-    Rscript download_data.R
-
-### some data must still be downloaded manually:
-
-## into folder "geo"
-#### from https://www.census.gov/programs-surveys/geography/guidance/geo-areas/pumas.html
-#### (2010 file is already in this repo)
-
-    census tract to PUMA relationship file, *Census_Tract_to*PUMA*.*
-    (census boundaries were changed in 2020; choose the year corresponding to ACS year)
-
-#### from geocorr https://mcdc.missouri.edu/applications/geocorr2018.html (if using < 2020 ACS)
-#### or https://mcdc.missouri.edu/applications/geocorr2022.html (if using >= 2020 ACS)
-#### (geocorr2018 data for all US states is already in this repo)
-
-    puma to county, rename to *puma_to_county*.*
-    puma to cbsa (latest), rename to *puma_to_cbsa*.*
-    puma to urban-rural portion, rename to *puma_urban_rural*.*
-    cbg to cbsa (latest), rename *cbg_to_cbsa*.*
-    cbg to urban-rural portion, rename to *cbg_urban_rural*.*
-
-## into folder "work"
-#### employer size data from https://www.census.gov/programs-surveys/cbp/data/datasets.html
-#### (2016 complete county file is already in this repo; more complete than later data)
-
-    cbp16co.zip
-
-## into folder "school"
-#### from https://nces.ed.gov/programs/edge/Geographic/SchoolLocations
-
-    school locations: EDGE_GEOCODE_PUBLICSCH_*.xlsx
-    GIS data: folder Shapefile_SCH
-
-#### from https://nces.ed.gov/ccd/files.asp
-#### (choose "Nonfiscal" and Level = "School" from the dropdown options)
-
-    info about grades offered: "Directory" file ccd_sch_029*.csv or .zip
-    enrollment data: "Membership" file ccd_sch_052*.csv or .zip
-    number of teachers: "Staff" file ccd_sch_059*.csv or .zip
-
-### 2. (optional) edit config.json
-
-    inc_adj: current year ADJINC from PUMS "Data Dictionary" at https://www.census.gov/programs-surveys/acs/microdata/documentation.html
-    inc_cats: arbitrary labels for income categories
-    inc_cols: corresponding sets of columns from ACS table B19001
-    income_associativity_coefficient: SBM associativity between income groups when generating workplace networks
-    school_associativity_coefficient: SBM associativity between school grades when generating school networks
-    inst_res_per_worker: # of institutional group quarters residents per staff member
-    noninst_res_per_worker: # of non-institutional group quarters residents per staff member
-    workplace_K: mean degree for workplace networks (mean # of regular work contacts)
-    school_K: mean degree for school networks (mean # of regular school contacts)
-    gq_K: mean degree for group quarters networks (mean # of contacts within group quarters)
-
-### 3. install python and julia libraries:
-
-    python 3.9.16, pandas 1.5.3, numpy 1.24.3, geopandas 0.12.2, shapely 2.0.1, openpyxl 3.0.10
-    julia 1.9.0, CSV v0.10.10, DataFrames v1.5.0, Graphs v1.8.0, InlineStrings v1.4.0, JSON v0.21.4, MatrixMarket v0.4.0, StatsBase v0.33.21, ProportionalFitting v0.3.0
-
-### 4. run scripts:
-
-    python census.py
-    julia -p auto CO.jl 
-        (searches for optimal combination of samples to match census data, takes a while)
-        (uses multiple local processors; "-p auto" uses all available cores)
-    julia synthpop.jl
-
-### 5. (optional) export population and/or network to csv
-#### if continuing in julia, the population and contact network are serialized in folder "jlse"
-#### otherwise, run export script(s):
-
-    julia export_synthpop.jl
-    julia export_network.jl
-
-#### exports appear in folder "pop_export"
-#### network is exported as a sparse matrix in Matrix Market native exchange format https://math.nist.gov/MatrixMarket/formats.html#MMformat
-
-The file adj_mat_keys maps the indices of the contact matrix to the people in people.csv. **NOTE** The indices in the .mtx files begin at 1. If you are reading the matrix into Juila (or R), everything will work as expected. If you read it into Python using scipy.io.mmread, it will automatically subtract 1 from all the index values to make it 0-indexed. In adj_mat_keys, refer to the column (index_one or index_zero) corresponding to how the matrix ends up getting indexed. (In the older version, subtract 1 from the "index" column if your matrix becomes 0-indexed.)
-
-Keep in mind that this is not a complete contact network for a population; it only describes contacts *within* households, group quarters, schools, and workplaces. You will probably need to generate other types of contacts depending on what you're using this for. The file adj_out_workers lists people who work outside of the synthesized area; they have jobs but are not part of any workplace network. The file adj_dummy_keys lists people who live outside but work within the synthesized area; they belong to a workplace network but are not part of any household.
-
-
-
-
-## manual data download
-
-### note: currently only works with data from 2010 - 2019 (format changed in 2020)
-
-## into folder "census"
-#### create one sub-folder for each geographic area whose census data you will download; sub-folder names don't matter
-#### (if you're only using data from one US state, make one sub-folder for it)
-#### into each sub-folder, place the following data tables (from [data.census.gov](https://data.census.gov/))
-
-    (ACS* = ACS 5yr survey, census block group (CBG) level, from year ####)
-    (DEC* = decennial census tables from preceding census, having same cbg boundaries)
-
-    ACSDT5Y####.B01001-Data.csv
-    ACSDT5Y####.B09018-Data.csv
-    ACSDT5Y####.B09019-Data.csv
-    ACSDT5Y####.B09020-Data.csv
-    ACSDT5Y####.B09021-Data.csv
-    ACSDT5Y####.B11004-Data.csv
-    ACSDT5Y####.B11012-Data.csv
-    ACSDT5Y####.B11016-Data.csv
-    ACSDT5Y####.B19001-Data.csv
-    ACSDT5Y####.B22010-Data.csv
-    ACSDT5Y####.B23009-Data.csv
-    ACSDT5Y####.B23025-Data.csv
-    ACSDT5Y####.B25006-Data.csv
-    ACSDT5Y####.B11001H-Data.csv
-    ACSDT5Y####.B11001I-Data.csv
-    ACSDT5Y####.C24010-Data.csv
-    ACSDT5Y####.C24030-Data.csv
-    DECENNIALSF1####.P43-Data.csv
-
-
-## into folder "pums"
-#### PUMS data for the same 5-yr period as ACS
-#### from https://www2.census.gov/programs-surveys/acs/data/pums/
-
-    psam_h??.* and psam_p??.*
-    for each state you want to draw samples from
-    (these are provided inside zip files named csv_h??.zip and csv_p??.zip)
-
-## into folder "geo"
-#### from https://www.census.gov/programs-surveys/geography/guidance/geo-areas/pumas.html
-
-    census tract to PUMA relationship file, *Census_Tract_to*PUMA*.*
-    (census boundaries were changed in 2020; choose the year corresponding to ACS year)
-
-#### from geocorr https://mcdc.missouri.edu/applications/geocorr2018.html (if using < 2020 ACS)
-#### or https://mcdc.missouri.edu/applications/geocorr2022.html (if using >= 2020 ACS)
-
-    puma to county, rename to *puma_to_county*.*
-    puma to cbsa (latest), rename to *puma_to_cbsa*.*
-    puma to urban-rural portion, rename to *puma_urban_rural*.*
-    cbg to cbsa (latest), rename *cbg_to_cbsa*.*
-    cbg to urban-rural portion, rename to *cbg_urban_rural*.*
-
-#### cbg lat-long coords from https://www2.census.gov/geo/tiger/TIGER####/BG/ where #### is year
-
-    tl####_??_bg.zip where ?? is the FIPS code for each state in the synth area
-
-
-## into folder "work"
-#### origin-destination work commute data from https://lehd.ces.census.gov/data/
-#### use the version that has the same boundaries as the ACS data (v7 for < 2020; v8 for >= 2020)
-#### use JT01, "primary" jobs (because JT00 counts 2+ jobs for the same individual)
-
-    main file for every state in the synth area, named *od_main_JT01*.csv.gz
-    aux file for every state in the synth area, named *od_aux_JT01*.csv.gz
-    if many people from your synth area commute to other states, also get the *aux* file for those states
-
-#### workplace area characteristics (WAC) data from same site
-
-    one file for each state in the synth area, named *wac_S000_JT01*.csv.gz
-
-#### employer size data from https://www.census.gov/programs-surveys/cbp/data/datasets.html
-#### 2016 complete county file (more complete than later data)
-
-    cbp16co.zip
-
-
-## into folder "school"
-#### from https://nces.ed.gov/programs/edge/Geographic/SchoolLocations
-
-    school locations: EDGE_GEOCODE_PUBLICSCH_*.xlsx
-    GIS data: folder Shapefile_SCH
-
-#### from https://nces.ed.gov/ccd/files.asp
-#### (choose "Nonfiscal" and Level = "School" from the dropdown options)
-
-    info about grades offered: "Directory" file ccd_sch_029*.csv or .zip
-    enrollment data: "Membership" file ccd_sch_052*.csv or .zip
-    number of teachers: "Staff" file ccd_sch_059*.csv or .zip
+# GeoPops
+**Full documentation and tutorials coming soon!**
+
+GeoPops is a package for generating synthetic populations (people, households, schools, and workplaces) from US Census data for a specified region. GeoPops uses combinatorial optimization (CO) to sample households from Public Use Microdata Samples (PUMS) to match marginal demographic targets from the American Community Survey (ACS) at the Census Block Group (CBG) level. Individuals are then assigned to schools and workplaces based on enrollment data and commute flows. Contact networks for schools and workplaces are generated using stochastic block models to capture assortative mixing patterns. Data downloading and pre-processing use Python, while CO and network generation use Julia to reduce runtime. GeoPops builds on a previous package, [GREASYPOP-CO](https://github.com/CDDEP-DC/GREASYPOP-CO/tree/main), and we are currently implementing the following changes:
+- code compatible with Census data beyond 2019
+- data downloading and processing wrapped in a Python package
+- users can specify the year and region of the population they wish to generate with front-end commands
+- extension to process data compatible with the agent-based modeling software [Starsim](https://starsim.org/)
+## How to use
+By December 2025, you will be able to install GeoPops via [PyPI](https://pypi.org/):
+```
+pip install geopops
+```
+The following Python script processes input data for a 2021 population of Maryland (state fips code 24) with agents who commute to work into and out of Maryland from DC (fips code 11) and northern Virginia (fips code 51). First, you'll need to obtain a Census API key [here](https://api.census.gov/data/key_signup.html).
+```
+import geopops as gps
+gps.download(year=2021, geos=[24], use_pums=[24], commute_states=[24,11,51], census_api_key=[your_key_here])
+gps.process()
+```
+The `gps.download()` class downloads corresponding data into the folders "census", "geo", "pums", and "work". School data needs to be downloaded manually following the instructions in `download_from_nces.txt` in the "school" folder. The `gps.process()` class reads these files and outputs data into the folder "processed". Next, run the following scripts in Julia:
+```
+CO.jl
+synthpop.jl
+export_synthpop.jl
+export_network.jl
+```
+`CO.jl` searches for an optimal combination of samples to match Census data. `synthpop.jl` assigns individuals to schools and workplaces and connects them within these settings using stochastic block modeling. If you want to continue in Julia, the population and contact networks are serialized in the folder "jlse". `export_synthpop.jl` and `export_network.jl` export the population as mtx and csv files into the folder `pop_export`. Then you can process your files to be compatible with the open-source agent-based modeling software Starsim by running the following line in Python:
+```
+gps.starsim()
+```
+This class reads the files in the "pop_export" folder and creates csv files for generating a `People` object and corresponding networks (home, school, workplace) for simulations using Starsim.
+
+Prior to December 2025, you can generate a population by downloading this repository and running the files `data_download.py` and `census.py`, followed by the Julia scripts. First, define year, geos, use_pums, commute_states, and census_api_key in the file `config.json`. For more information on data sources and files within this repository, visit [GREASYPOP-CO](https://github.com/CDDEP-DC/GREASYPOP-CO/tree/main). Full GeoPops documentation and tutorials coming soon!
 
