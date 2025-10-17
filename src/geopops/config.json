@@ -4,13 +4,13 @@
     "main_year": 2019,
     "decennial_year": 2010,
     "geos": [
-        24027
+        "24027"
     ],
     "commute_states": [
-        24
+        "24"
     ],
     "use_pums": [
-        24
+        "24"
     ],
     "acs_required": [
         "B01001",
