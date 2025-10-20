@@ -1,16 +1,16 @@
 {
-    "path": "/Users/Alisa/Library/CloudStorage/OneDrive-JohnsHopkins/Research/GeoPops_all/geopops/testing",
-    "census_api_key": "4ab35c539d0d99127684ce3a387231ee78612a46",
+    "path": "YOUR_OUTPUT_DIR",
+    "census_api_key": "YOUR_CENSUS_API_KEY",
     "main_year": 2019,
     "decennial_year": 2010,
     "geos": [
-        24027
+        "24027"
     ],
     "commute_states": [
-        24
+        "24"
     ],
     "use_pums": [
-        24
+        "24"
     ],
     "acs_required": [
         "B01001",
