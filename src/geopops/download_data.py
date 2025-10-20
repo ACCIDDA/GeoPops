@@ -477,8 +477,8 @@ def pull_pums_data(states, year, verbose=1):
     for state in states:
         file_urls.append((state, f"https://www2.census.gov/programs-surveys/acs/data/pums/{year}/5-Year/csv_h{state}.zip"))
         file_urls.append((state, f"https://www2.census.gov/programs-surveys/acs/data/pums/{year}/5-Year/csv_p{state}.zip"))
-        if verbose:
-            print('file_urls', file_urls)
+        # if verbose:
+        #     print('file_urls', file_urls)
     for state_i in states:
         
         if verbose:
@@ -1058,7 +1058,7 @@ class DownloadData:
             verbose=self.verbose
         )
 
-        # pull_pums_data(states=use_pums, year=main_year, verbose=self.verbose)
+        pull_pums_data(states=use_pums, year=main_year, verbose=self.verbose)
 
         download_shapefiles(main_fips, main_year, self.verbose)
 
