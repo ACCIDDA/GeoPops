@@ -1,7 +1,8 @@
 # GeoPops
 **Full documentation and tutorials coming soon!**
+GeoPops is in development, and we welcome feedback. Please log any issues.
 
-GeoPops is a package for generating geographically and demographically realistic synthetic populations for any US Census location using publically available data. GeoPops is in development, and we welcome feedback in the issues folder. Population generation includes three steps:
+**GeoPops** is a package for generating geographically and demographically realistic synthetic populations for any US Census location using publically available data. Population generation includes three steps:
 1. Generate individuals within households using combinatorial optimization (CO)
 2. Assign individuals to schools and workplace locations using enrollment data and commute flows
 3. Connect individuals within locations using graph algorithms
