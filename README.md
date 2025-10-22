@@ -8,11 +8,10 @@ GeoPops is a package for generating geographically and demographically realistic
 
 Resulting files include a list of agents with attributes (e.g., age, gender, income) and networks detailing their connections within home, school, workplace, and group quarters (e.g., correctional facilities, nursing homes) locations. GeoPops is meant to produce reasonable approximations of state and county population characteristics with granularity down to the Census Block Group (CBG).   GeoPops builds on a previous package, [GREASYPOP-CO](https://github.com/CDDEP-DC/GREASYPOP-CO/tree/main), and incorporates the following changes:
 - All code wrapped in convenient Python package that can be pip installed
-- Compatibility with Census data beyond 2019
+- Compatibility with Census data beyond 2019 (still developing)
 - Automated data downloading
 - Users can adjust all config parameters from the front-end
 - Class for exporting files compatible with the agent-based modeling software [Starsim](https://starsim.org/)
-
 
 ## How to use
 First, create a Julia environment with the dependencies listed below. It may be easiest to store the environment in the same folder you will use for output files. While called with Python commands, combinatorial optimization, school and workplace assignment, and network generation steps occur in Julia to decrease run time. Try running the following in the terminal.
@@ -56,13 +55,18 @@ pars_geopops = {'path': 'YOUR_OUTPUT_DIR', # designate folder for output files
                 'commute_states': ["24"], # fips of commute states to use
                 'use_pums': ["24"]} # Same as commute_states
 
-geopops.WriteConfig(**pars_geopops) # Overwrite config.json with your parameters
+c = geopops.WriteConfig(**pars_geopops) # Overwrite config.json with your parameters
+c.get_pars() # View config.json as dictionary
 ```
 The commands below will create your popoulation and store files in the output directory defined above. Downloaded raw data files are stored in the subfolders census, geo, pums, school, and work. Files created in the preprocessing step are stored in the subfolder called processed. The population in jlse format is stored in the subfolder jlse. `Export()` outputs csv versions into the subfolder pop_export. `ForStarsim()` outputs files formated for use with Starsim into the subfolder pop_export/starsim.
 ```
 geopops.DownloadData()          # Download all Census and other data sources
 geopops.ProcessData()           # Preprocessing for next steps
-geopops.RunJulia().run_all()    # Run Julia scripts (much faster than Python)
+j = geopops.RunJulia()
+j.run_all()                     # Run Julia scripts (much faster than Python). Can also run separately
+# j.CO()                        # Combinatorial optimization. Output in jlse folder                    
+# j.SynthPop()                  # School/workplace assignment and network generation
+# j.Export()                    # Export to csv format
 geopops.ForStarsim()            # Format people and networks for Starsim
 ```
 ## Tutorials
