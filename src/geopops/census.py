@@ -34,13 +34,9 @@ def tryJSON(filename):
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_DIR = BASE_DIR  # Will be overridden from config["path"] at runtime
 
-config_path = os.path.join(BASE_DIR, "config.json")
-if not os.path.exists(config_path):
-    raise FileNotFoundError(f"config.json file not found at {config_path}. Please create this file with the required configuration.")
-
-with open(config_path, "r") as f:
-    config = json.load(f)
-OUTPUT_DIR = config.get("path", BASE_DIR)
+# Module-level variables - will be set when ProcessData is instantiated
+config = None
+OUTPUT_DIR = BASE_DIR
 PROCESSED_DIR = os.path.join(OUTPUT_DIR, "processed")
 
 ## round a pandas Series to integers while preserving sum
@@ -1513,27 +1509,30 @@ class ProcessData:
     Mirrors the pattern used by `Downloader` so it can be imported and run from other code.
     """
 
-    def __init__(self, config_dict=None, config_path=None, base_dir=None):
+    def __init__(self, config_dict=None, base_dir=None):
         """Create a census runner.
 
         Args:
-            config_dict: Optional dict with configuration. If provided, takes precedence over config_path.
-            config_path: Optional path to a JSON config file. Defaults to '<this file>/config.json'.
+            config_dict: Optional dict with configuration. If provided, takes precedence over loading from config.json.
             base_dir: Optional base dir to use for relative paths. Defaults to this file's directory.
         """
         self.base_dir = base_dir if base_dir is not None else BASE_DIR
+        
         if config_dict is not None:
             self.config = config_dict
         else:
-            cfg_path = config_path if config_path is not None else os.path.join(self.base_dir, "config.json")
+            cfg_path = os.path.join(self.base_dir, "config.json")
             if not os.path.exists(cfg_path):
                 raise FileNotFoundError(f"config.json file not found at {cfg_path}. Please create this file with the required configuration.")
             with open(cfg_path, "r") as f:
                 self.config = json.load(f)
 
-        # Ensure module-level 'config' used by generate_gq reflects this runner's config
-        global config
+        # Set module-level variables for use by other functions
+        global config, OUTPUT_DIR, PROCESSED_DIR
         config = self.config
+        OUTPUT_DIR = self.config.get("path", self.base_dir)
+        PROCESSED_DIR = os.path.join(OUTPUT_DIR, "processed")
+        
         self.run_all()
 
     def run_all(self):

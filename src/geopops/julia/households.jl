@@ -210,8 +210,11 @@ end
 
 function generate_people()
 
-    dConfig = tryJSON("../src/geopops/config.json")
+    dConfig = tryJSON("config.json")
     additional_traits::Vector{String} = get(dConfig, "additional_traits", String[])
+    println("DEBUG: additional_traits from config: ", additional_traits)
+    println("DEBUG: additional_traits type: ", typeof(additional_traits))
+    println("DEBUG: additional_traits length: ", length(additional_traits))
     wp_codes = tryJSON("processed/codes.json")
     ind_codes::Vector{String} = get(wp_codes, "ind_codes", String[])
 
@@ -223,6 +226,13 @@ function generate_people()
 
     ind_colnames = Symbol.(["ind_"*k for k in ind_codes]) ## industry code columns in p_samps
     ind_col_idxs = Dict(ind_colnames .=> eachindex(ind_colnames)) ## assign an integer index to each, in order
+    
+    # Debug: Print PersonData struct info
+    println("DEBUG: PersonData struct fields:")
+    for (i, field) in enumerate(fieldnames(PersonData))
+        println("  $i: $field (", fieldtype(PersonData, field), ")")
+    end
+    println("DEBUG: Expected total fields: ", length(fieldnames(PersonData)))
 
     ## pre-compute some traits so we don't have to do it inside the loop
     ## each person has only one industry; append its code and index to each record
@@ -240,6 +250,8 @@ function generate_people()
     transform!(p_samps, "income_code" => ByRow(k->get(income_col_idxs,k,missing)) => "com_inc")
 
     add_trait_cols = Symbol.(additional_traits)
+    println("DEBUG: add_trait_cols after conversion: ", add_trait_cols)
+    println("DEBUG: add_trait_cols length: ", length(add_trait_cols))
 
     cbgs = Dict{String15, CBGkey}() ## assign an index to each cbg processed
     cbg_indexer = Indexer{CBGkey}()
@@ -257,6 +269,23 @@ function generate_people()
                 hh_key = (hh_i, cbg_i)
                 p_vec = p_idx[hh_serial] ## person sample indices in each household
                 for (p_i, r) in enumerate(p_vec) ## create each person from data in sample df
+                    # Debug: Print information about the first person to see what's happening
+                    if p_i == 1 && hh_i == 1
+                        println("DEBUG: First person data:")
+                        println("  hh_key: ", hh_key)
+                        println("  r (sample index): ", r)
+                        println("  AGEP: ", p_samps[r,:AGEP], " (type: ", typeof(p_samps[r,:AGEP]), ")")
+                        println("  has_job: ", p_samps[r,:has_job], " (type: ", typeof(p_samps[r,:has_job]), ")")
+                        println("  commuter: ", p_samps[r,:commuter], " (type: ", typeof(p_samps[r,:commuter]), ")")
+                        println("  com_cat: ", p_samps[r,:com_cat], " (type: ", typeof(p_samps[r,:com_cat]), ")")
+                        println("  com_inc: ", p_samps[r,:com_inc], " (type: ", typeof(p_samps[r,:com_inc]), ")")
+                        println("  sch_grade: ", p_samps[r,:sch_grade], " (type: ", typeof(p_samps[r,:sch_grade]), ")")
+                        println("  add_trait_cols: ", add_trait_cols)
+                        println("  additional traits values: ", [p_samps[r,x] for x in add_trait_cols])
+                        println("  additional traits types: ", [typeof(p_samps[r,x]) for x in add_trait_cols])
+                        println("  total arguments: ", 8 + length(add_trait_cols))
+                    end
+                    
                     people[(p_i,hh_i,cbg_i)] = PersonData(
                         hh_key, 
                         r, 

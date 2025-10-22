@@ -11,8 +11,6 @@ wheels/
 
 *.ipynb
 
-config.json
-
 testing
 
 .DS_Store

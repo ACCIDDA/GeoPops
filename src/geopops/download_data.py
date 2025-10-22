@@ -971,14 +971,12 @@ class DownloadData:
     and run the full download workflow (or pieces of it) from another module.
     """
 
-    def __init__(self, config=None, config_path=None, base_dir=None, verbose=1):
+    def __init__(self, config=None, base_dir=None, verbose=1):
         """Create a downloader.
 
         Args:
             config: Optional dict with configuration. If provided, takes
-                precedence over config_path.
-            config_path: Optional path to a JSON config file. If not provided,
-                defaults to '<this file>:/config.json'.
+                precedence over loading from config.json.
             base_dir: Optional base directory to use for relative paths.
                 Defaults to this file's directory.
             verbose: If 1, print output. If 0, suppress output. Defaults to 1.
@@ -988,12 +986,12 @@ class DownloadData:
         if config is not None:
             self.config = config
         else:
-            cfg_path = config_path if config_path is not None else os.path.join(self.base_dir, "config.json")
+            cfg_path = os.path.join(self.base_dir, "config.json")
             if not os.path.exists(cfg_path):
                 raise FileNotFoundError(f"config.json file not found at {cfg_path}. Please create this file with the required configuration.")
             with open(cfg_path, "r") as f:
                 self.config = json.load(f)
-        # Initialize OUTPUT_DIR from config["path"] (fallback to package dir)
+        # Initialize OUTPUT_DIR from config["output_dir"] (fallback to package dir)
         global OUTPUT_DIR
         OUTPUT_DIR = self.config.get("path", self.base_dir)
         os.makedirs(OUTPUT_DIR, exist_ok=True)

@@ -6,99 +6,54 @@ from shutil import which
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-def load_config(config_path=None):
-    """Load config file to get user-specified path."""
-    cfg_path = config_path if config_path is not None else os.path.join(BASE_DIR, "config.json")
-    if not os.path.exists(cfg_path):
-        raise FileNotFoundError(f"config.json file not found at {cfg_path}. Please create this file with the required configuration.")
-    with open(cfg_path, "r") as f:
+def load_config():
+    """Load config file from package directory."""
+    config_path = os.path.join(BASE_DIR, "config.json")
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"config.json file not found at {config_path}. Please create this file with the required configuration.")
+    with open(config_path, "r") as f:
         return json.load(f)
 
 class RunJulia:
     """Orchestrates Julia script execution using the existing functions in this module.
     """
     
-    def __init__(self, base_dir=None, config_path=None):
+    def __init__(self, output_dir=None, julia_env_path=None):
         """Create a Julia runner.
         
         Args:
-            base_dir: Optional base dir to use for relative paths. If None, uses path from config.json.
-            config_path: Optional path to config file. Defaults to package config.json.
+            output_dir: Optional output directory. If None, uses output_dir from config.json.
+            julia_env_path: Optional Julia environment path. If None, uses julia_env_path from config.json.
         """
+        # Load config to get paths
+        config = load_config()
+        
         # Julia scripts are always in the package directory
         self.julia_scripts_dir = os.path.join(BASE_DIR, "julia")
         
-        # Output directory from config or provided base_dir
-        if base_dir is not None:
-            self.output_dir = base_dir
+        # Output directory from parameter or config
+        if output_dir is not None:
+            self.output_dir = output_dir
         else:
-            # Load config to get user-specified path for output
-            config = load_config(config_path)
             self.output_dir = config.get("path", BASE_DIR)
             
-        # Determine the correct Julia command
-        self.julia_cmd = self._get_julia_cmd("1.9.0")
-            
-        # Set up Julia environment with required packages
-        self.setup_julia_environment()
-        self.run_all()
-    
-    def _get_julia_cmd(self, version="1.9.0", explicit_path=None):
-        """Get the correct Julia command with version selection."""
-        if explicit_path:
-            return [explicit_path]
-        
-        # First try juliaup version selector
-        if which("julia"):
-            try:
-                result = subprocess.run(["julia", f"+{version}"], capture_output=True, timeout=5)
-                if result.returncode == 0:
-                    # juliaup supports +version selector
-                    return ["julia", f"+{version}"]
-            except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
-                pass
-        
-        # Try just "julia" and check version
-        if which("julia"):
-            try:
-                result = subprocess.run(["julia", "--version"], capture_output=True, text=True, timeout=5)
-                if result.returncode == 0 and "julia version 1.9" in result.stdout:
-                    return ["julia"]
-            except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
-                pass
-        
-        # If we get here, Julia 1.9 is not available
-        raise RuntimeError(
-            f"Julia 1.9.0 not found. Please install Julia 1.9.0 or juliaup with version 1.9.\n"
-            f"Current julia version: {subprocess.run(['julia', '--version'], capture_output=True, text=True).stdout if which('julia') else 'Julia not found on PATH'}"
-        )
-    
-    def setup_julia_environment(self):
-        """Set up Julia environment with required packages."""
-        # Use the existing Julia 1.9 environment
-        self.julia_env_path = "/Users/Alisa/.julia/environments/v1.9"
+        # Julia environment path from parameter or config
+        if julia_env_path is not None:
+            self.julia_env_path = julia_env_path
+        else:
+            self.julia_env_path = config.get("julia_env_path")
+            if not self.julia_env_path:
+                raise ValueError("julia_env_path not found in config.json")
         
         # Check if the environment exists
         if not os.path.exists(self.julia_env_path):
             raise RuntimeError(f"Julia environment not found at {self.julia_env_path}")
         
+        # Use standard julia command
+        self.julia_cmd = ["julia"]
+        
         print(f"Using Julia environment: {self.julia_env_path}")
-        
-        # Optional: Verify required packages are installed
-        required_packages = [
-            "CSV", "DataFrames", "Graphs", "InlineStrings", "JSON"
-        ]
-        
-        try:
-            # Check if packages are available
-            jl_check = 'using Pkg; Pkg.activate(raw"' + self.julia_env_path + '"); ' + \
-                      '; '.join([f'using {pkg}' for pkg in required_packages])
-            subprocess.run([*self.julia_cmd, "--startup-file=no", "-e", jl_check], 
-                         check=True, text=True, capture_output=True)
-            print("All required packages are available!")
-        except subprocess.CalledProcessError as e:
-            print(f"Warning: Some packages may not be installed in the environment: {e}")
-            print("You may need to manually install missing packages.")
+        print(f"Using output directory: {self.output_dir}")
     
     def CO(self):
         """Run the CO.jl Julia script."""
