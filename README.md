@@ -17,6 +17,7 @@ Resulting files include a list of agents with attributes (e.g., age, gender, inc
 ## How to use
 First, create a Julia environment with the dependencies listed below. It may be easiest to store the environment in the same folder you will use for output files. While called with Python commands, combinatorial optimization, school and workplace assignment, and network generation steps occur in Julia to decrease run time. Try running the following in the terminal.
 ```
+cd "YOUR_PATH"
 curl -fsSL https://install.julialang.org | sh
 juliaup add 1.9.0        # Install Julia 1.9.0
 juliaup default 1.9.0    # Make 1.9.0 the default (optional)
@@ -54,7 +55,7 @@ pars_geopops = {'path': 'YOUR_OUTPUT_DIR', # designate folder for output files
                 'geos': ["24027"], # state or county fips code of main geographical area
                 'commute_states': ["24"], # fips of commute states to use
                 'use_pums': ["24"]} # Same as commute_states
-                
+
 geopops.WriteConfig(**pars_geopops) # Overwrite config.json with your parameters
 ```
 The commands below will create your popoulation and store files in the output directory defined above. Downloaded raw data files are stored in the subfolders census, geo, pums, school, and work. Files created in the preprocessing step are stored in the subfolder called processed. The population in jlse format is stored in the subfolder jlse. `Export()` outputs csv versions into the subfolder pop_export. `ForStarsim()` outputs files formated for use with Starsim into the subfolder pop_export/starsim.
