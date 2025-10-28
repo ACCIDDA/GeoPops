@@ -348,7 +348,7 @@ def pull_census_data(state_fips, year_ACS, year_DEC, ACS_table_codes, DEC_table_
     
     for state_i in state_fips:
         if verbose:
-            print(f"Downloading Census data")
+            print(f"Downloading Census data for {state_i}")
         
         # Process ACS table codes
         table_codes = pd.DataFrame({
@@ -482,7 +482,7 @@ def pull_pums_data(states, year, verbose=1):
     for state_i in states:
         
         if verbose:
-            print(f"Downloading PUMS data")
+            print(f"Downloading PUMS data for {state_i}")
         
         urls_list = [url for state, url in file_urls if state == state_i]
         
@@ -571,7 +571,7 @@ def download_shapefiles(state_fips, year, verbose=1):
     for state_i in state_fips:
         
         if verbose:
-            print(f"Downloading Shapefiles")
+            print(f"Downloading Shapefiles for {state_i}")
         
         urls_list = [url for state, url in file_urls if state == state_i]
         

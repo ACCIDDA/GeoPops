@@ -9,8 +9,15 @@ wheels/
 # Virtual environments
 .venv
 
-*.ipynb
-
-testing
 
 .DS_Store
+
+tutorials/MIDAS/config.json
+tutorials/MIDAS/census
+tutorials/MIDAS/geo
+tutorials/MIDAS/jlse
+tutorials/MIDAS/pop_export
+tutorials/MIDAS/processed
+tutorials/MIDAS/pums
+tutorials/MIDAS/school
+tutorials/MIDAS/work
