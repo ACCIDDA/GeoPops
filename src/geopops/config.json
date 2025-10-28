@@ -1,7 +1,7 @@
 {
-    "path": "/Users/Alisa/Library/CloudStorage/OneDrive-JohnsHopkins/Research/GeoPops_all/geopops/tutorials/MIDAS",
-    "census_api_key": "4ab35c539d0d99127684ce3a387231ee78612a46",
-    "julia_env_path": "/Users/Alisa/.julia/environments/v1.9",
+    "path": "YOUR_OUTPUT_DIR",
+    "census_api_key": "YOUR_CENSUS_API_KEY",
+    "julia_env_path": "YOUR_JULIA_ENV_PATH",
     "main_year": 2019,
     "decennial_year": 2010,
     "geos": [
@@ -103,5 +103,4 @@
     "gq_K": 12,
     "netw_K": 8,
     "netw_B": 0.25,
-    "output_dir": "/Users/Alisa/Library/CloudStorage/OneDrive-JohnsHopkins/Research/GeoPops_all/geopops/testing"
 }
