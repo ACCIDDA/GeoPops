@@ -54,7 +54,7 @@ pars_geopops = {'path': 'YOUR_OUTPUT_DIR', # designate folder for output files
                 'main_year': 2019, # year of data
                 'geos': ["24027"], # state or county fips code of main geographical area
                 'commute_states': ["24"], # fips of commute states to use
-                'use_pums': ["24"]} # Same as commute_states
+                'use_pums': ["24"]} # PUMS states to use
 
 c = geopops.WriteConfig(**pars_geopops) # Overwrite config.json with your parameters
 c.get_pars() # View config.json as dictionary
