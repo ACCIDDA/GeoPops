@@ -70,10 +70,11 @@ j.run_all()                     # Run Julia scripts (much faster than Python). C
 # j.Export()                    # Export to csv format
 ```
 The `ForStarsim()` classes has nested classses which can be passed into a Starsim simulation to run a model on your GeoPops popopulation.
-* `geopops.ForStarsim.People()` creates a Starsim People object
-* `geopops.ForStarsim.GPNetwork()` creates a Starsim Network object
-* `geopops.ForStarsim.SubgroupTracking()` creates a Starsim Analyzer object for demographic or geographic subgroup tracking
-
+```
+geopops.ForStarsim.People()             # Creates a Starsim People object
+geopops.ForStarsim.GPNetwork()          # Creates a Starsim Network object
+geopops.ForStarsim.SubgroupTracking()   # Creates a Starsim Analyzer object for demographic or geographic subgroup tracking
+```
 ## Tutorials
 See tutorials/MIDAS for more detailed usage as well as a Notebook tutorial.
 
