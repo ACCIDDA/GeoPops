@@ -3,8 +3,8 @@
 GeoPops is in development, and we welcome feedback. Please log any issues.
 
 **GeoPops** is a package for generating geographically and demographically realistic synthetic populations for any US Census location using publically available data. Population generation includes three steps:
-1. Generate individuals within households using combinatorial optimization (CO)
-2. Assign individuals to schools and workplace locations using enrollment data and commute flows
+1. Generate individuals and households using combinatorial optimization (CO)
+2. Assign individuals to school and workplace locations using enrollment data and commute flows
 3. Connect individuals within locations using graph algorithms
 
 Resulting files include a list of agents with attributes (e.g., age, gender, income) and networks detailing their connections within home, school, workplace, and group quarters (e.g., correctional facilities, nursing homes) locations. GeoPops is meant to produce reasonable approximations of state and county population characteristics with granularity down to the Census Block Group (CBG).   GeoPops builds on a previous package, [GREASYPOP-CO](https://github.com/CDDEP-DC/GREASYPOP-CO/tree/main), and incorporates the following changes:
@@ -15,7 +15,7 @@ Resulting files include a list of agents with attributes (e.g., age, gender, inc
 - Class for exporting files compatible with the agent-based modeling software [Starsim](https://starsim.org/)
 
 ## How to use
-First, create a Julia environment with the dependencies listed below. It may be easiest to store the environment in the same folder you will use for output files. While called with Python commands, combinatorial optimization, school and workplace assignment, and network generation steps occur in Julia to decrease run time. Try running the following in the terminal.
+First, create a Julia environment with the dependencies listed below. It may be easiest to store the environment in the same folder you will use for output files. While called with Python commands, combinatorial optimization, school and workplace assignment, and network generation steps occur in Julia to decrease run time. The following terminal commands should work with MacOS. Don't copy the comments; these are just for reference. Julia download instructions [here](https://julialang.org/install/).
 ```
 cd "YOUR_PATH"
 curl -fsSL https://install.julialang.org | sh
@@ -37,7 +37,10 @@ add MatrixMarket@0.4.0
 add ProportionalFitting@0.3.0
 status                   # View list of packages
 ```
-
+If you are using Windows, try the following. Julia download instructions [here](https://julialang.org/install/).
+```
+winget install --name Julia --id 9NJNWW8PVKMN -e -s msstore
+```
 
 You'll also need a Python environment with the dependencies listed in the GeoPops `pyproject.toml`. Install GeoPops from [PyPI](https://pypi.org/project/geopops/).
 ```
@@ -59,7 +62,7 @@ pars_geopops = {'path': 'YOUR_OUTPUT_DIR', # designate folder for output files
 c = geopops.WriteConfig(**pars_geopops) # Overwrite config.json with your parameters
 c.get_pars() # View config.json as dictionary
 ```
-The commands below will create your popoulation and store files in the output directory defined above. Downloaded raw data files are stored in the subfolders census, geo, pums, school, and work. Files created in the preprocessing step are stored in the subfolder called processed. The population in jlse format is stored in the subfolder jlse. `Export()` outputs csv versions into the subfolder pop_export. `ForStarsim()` outputs files formated for use with Starsim into the subfolder pop_export/starsim.
+The commands below will create your popoulation and store files in the output directory defined above. Downloaded raw data files are stored in the subfolders census, geo, pums, school, and work. Files created in the preprocessing step are stored in the subfolder called processed. The population in jlse format is stored in the subfolder jlse. `Export()` outputs csv versions into the subfolder pop_export.
 ```
 geopops.DownloadData()          # Download all Census and other data sources
 geopops.ProcessData()           # Preprocessing for next steps
@@ -69,12 +72,12 @@ j.run_all()                     # Run Julia scripts (much faster than Python). C
 # j.SynthPop()                  # School/workplace assignment and network generation
 # j.Export()                    # Export to csv format
 ```
-The `ForStarsim()` classes has nested classses which can be passed into a Starsim simulation to run a model on your GeoPops popopulation.
+The `ForStarsim()` classes has nested classes which can be passed into a Starsim simulation to run a model on your GeoPops popopulation.
 ```
-geopops.ForStarsim.People()             # Creates a Starsim People object
-geopops.ForStarsim.GPNetwork()          # Creates a Starsim Network object
-geopops.ForStarsim.SubgroupTracking()   # Creates a Starsim Analyzer object for demographic or geographic subgroup tracking
+geopops.ForStarsim.People()             # Returns a Starsim People object
+geopops.ForStarsim.GPNetwork()          # Returns a Starsim Network object
+geopops.ForStarsim.SubgroupTracking()   # Returns a Starsim Analyzer object for demographic or geographic subgroup tracking
 ```
 ## Tutorials
-See tutorials/MIDAS for more detailed usage as well as a Notebook tutorial.
+See tutorials/MIDAS for more detailed usage in a Notebook tutorial.
 
