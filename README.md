@@ -37,7 +37,7 @@ add MatrixMarket@0.4.0
 add ProportionalFitting@0.3.0
 status                   # View list of packages
 ```
-If you are using Windows, try the following. Julia download instructions [here](https://julialang.org/install/).
+If you are using Windows, try the following. Julia download instructions [here](https://julialang.org/install/). Look for "For Windows instructions, click here".
 ```
 winget install --name Julia --id 9NJNWW8PVKMN -e -s msstore
 ```
@@ -79,5 +79,5 @@ geopops.ForStarsim.GPNetwork()          # Returns a Starsim Network object
 geopops.ForStarsim.SubgroupTracking()   # Returns a Starsim Analyzer object for demographic or geographic subgroup tracking
 ```
 ## Tutorials
-See tutorials/MIDAS for more detailed usage in a Notebook tutorial.
+See [tutorials/MIDAS](https://github.com/ACCIDDA/GeoPops/tree/main/tutorials/MIDAS) for more detailed usage in a Notebook tutorial.
 
