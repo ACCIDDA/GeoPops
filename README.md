@@ -62,7 +62,7 @@ pars_geopops = {'path': 'YOUR_OUTPUT_DIR', # designate folder for output files
 c = geopops.WriteConfig(**pars_geopops) # Overwrite config.json with your parameters
 c.get_pars() # View config.json as dictionary
 ```
-The commands below will create your popoulation and store files in the output directory defined above. Downloaded raw data files are stored in the subfolders census, geo, pums, school, and work. Files created in the preprocessing step are stored in the subfolder called processed. The population in jlse format is stored in the subfolder jlse. `Export()` outputs csv versions into the subfolder pop_export.
+The commands below will create your popoulation and store files in the output directory defined above. Downloaded raw data files are stored in the subfolders census, geo, pums, school, and work. Files created in the preprocessing step are stored in the subfolder called processed. The population in jlse format is stored in the subfolder jlse. `Export()` outputs csv versions into the subfolder pop_export. 
 ```
 geopops.DownloadData()          # Download all Census and other data sources
 geopops.ProcessData()           # Preprocessing for next steps
@@ -79,5 +79,36 @@ geopops.ForStarsim.GPNetwork()          # Returns a Starsim Network object
 geopops.ForStarsim.SubgroupTracking()   # Returns a Starsim Analyzer object for demographic or geographic subgroup tracking
 ```
 ## Tutorials
-See [tutorials/MIDAS](https://github.com/ACCIDDA/GeoPops/tree/main/tutorials/MIDAS) for more detailed usage in a Notebook tutorial.
+See [tutorials/MIDAS](https://github.com/ACCIDDA/GeoPops/tree/main/tutorials/MIDAS) for more detailed usage in a Notebook tutorial. GeoPops is in development, and we welcome feedback! Please log any issues as you try it out.
+
+## Conferences
+
+### MIDAS 2025
+**GeoPops demonstration: An open-source, adaptable framework for agent-based modeling on synthetic populations**
+
+This tutorial accompanies a speed talk and poster at the MIDAS 2025 annual symposium. It demonstrates:
+* Making a population of Howard County, MD
+* Running a Starsim SIR ABM on the population
+* Incorporating endogenous feedback for "school closures"
+* Tracking outcomes by demographic and geographic subgroups
+
+For more realistic applications find me at the following conferences:
+
+### Winter Simulation Conference 2025
+**GeoPops: An open-source package for generating geographically realistic synthetic populations** (*Presentation*)
+* More detailed methodology and usage
+* Compare GeoPops to two other open-source synthetic population generators (UrbanPop and Geo-Synthetic-Pop)
+  * Make three MD pops (one with each generator)
+  * Compare individuals and homes to real Census data
+  * Compare network stats of each home, school, and workplace network
+  * Run Starsim COVID-19 model on each population
+  * Compare simulation results to each other and observed data for first wave of pandemic
+  * Discuss usability of each generator
+
+### Epidemics 2025
+**Modeling the impact of dynamic decision making on infectious disease outcomes by demographic and geographic subgroups: An open-source agent-based modeling framework** (*Poster*)
+* Run Starsim COVID-19 model with utility framework on GeoPops population of MD
+* Individuals weigh health-wealth trade-offs of staying home from work as a function of their income and age
+* Test different policy scenarios (e.g., paid sick leave, cash transfer) and compare to observed data from first wave of pandemic
+* Demographic and geographic subgroup outcome tracking 
 
