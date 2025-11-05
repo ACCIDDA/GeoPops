@@ -15,6 +15,10 @@ Resulting files include a list of agents with attributes (e.g., age, gender, inc
 - Class for exporting files compatible with the agent-based modeling software [Starsim](https://starsim.org/)
 
 ## How to use
+
+See [tutorials/MIDAS](https://github.com/ACCIDDA/GeoPops/tree/main/tutorials/MIDAS) for more detailed usage in a Notebook tutorial. Set up and basic usage below.
+
+
 First, create a Julia environment with the dependencies listed below. It may be easiest to store the environment in the same folder you will use for output files. While called with Python commands, combinatorial optimization, school and workplace assignment, and network generation steps occur in Julia to decrease run time. The following terminal commands should work with MacOS. Don't copy the comments; these are just for reference. Julia download instructions [here](https://julialang.org/install/).
 ```
 cd "YOUR_PATH"
@@ -86,7 +90,7 @@ See [tutorials/MIDAS](https://github.com/ACCIDDA/GeoPops/tree/main/tutorials/MID
 ### MIDAS 2025
 **GeoPops demonstration: An open-source, adaptable framework for agent-based modeling on synthetic populations**
 
-This tutorial accompanies a speed talk and poster at the MIDAS 2025 annual symposium. It demonstrates:
+This [tutorial](https://github.com/ACCIDDA/GeoPops/tree/main/tutorials/MIDAS) accompanies a speed talk and poster at the MIDAS 2025 annual symposium. It demonstrates:
 * Making a population of Howard County, MD
 * Running a Starsim SIR ABM on the population
 * Incorporating endogenous feedback for "school closures"
