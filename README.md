@@ -19,7 +19,7 @@ Resulting files include a list of agents with attributes (e.g., age, gender, inc
 See [tutorials/MIDAS](https://github.com/ACCIDDA/GeoPops/tree/main/tutorials/MIDAS) for more detailed usage in a Notebook tutorial. Set up and basic usage below.
 
 
-First, create a Julia environment with the dependencies listed below. It may be easiest to store the environment in the same folder you will use for output files. While called with Python commands, combinatorial optimization, school and workplace assignment, and network generation steps occur in Julia to decrease run time. The following terminal commands should work with MacOS. Don't copy the comments; these are just for reference. Julia download instructions [here](https://julialang.org/install/).
+First, create a **Julia environment** with the dependencies listed below. It may be easiest to store the environment in the same folder you will use for output files. While called with Python commands, combinatorial optimization, school and workplace assignment, and network generation steps occur in Julia to decrease run time. The following terminal commands should work with MacOS. Don't copy the comments; these are just for reference. Julia download instructions [here](https://julialang.org/install/).
 ```
 cd "YOUR_PATH"
 curl -fsSL https://install.julialang.org | sh
@@ -46,12 +46,12 @@ If you are using Windows, try the following. Julia download instructions [here](
 winget install --name Julia --id 9NJNWW8PVKMN -e -s msstore
 ```
 
-You'll also need a Python environment with the dependencies listed in the GeoPops `pyproject.toml`. Install GeoPops from [PyPI](https://pypi.org/project/geopops/).
+You'll also need a **Python environment** with the dependencies listed in the GeoPops `pyproject.toml`. Install GeoPops from [PyPI](https://pypi.org/project/geopops/).
 ```
 pip install geopops
 ```
 
-Next, obtain a Census API key [here](https://api.census.gov/data/key_signup.html), which will be used for pulling Census data. 
+Next, obtain a **Census API key** [here](https://api.census.gov/data/key_signup.html), which will be used for pulling Census data. 
 
 Now in a Python or Notebook script, create a dictionary of parameters. Default parameters are stored in a package file called `config.json`. Pass your dictionary into `WriteConfig()` to overwrite config.json with the parameters for your population of interest. Here's an example to for Howard County, MD.
 ```
