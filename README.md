@@ -114,5 +114,5 @@ For more realistic applications find me at the following conferences:
 * Run Starsim COVID-19 model with utility framework on GeoPops population of MD
 * Individuals weigh health-wealth trade-offs of staying home from work as a function of their income and age
 * Test different policy scenarios (e.g., paid sick leave, cash transfer) and compare to observed data from first wave of pandemic
-* Demographic and geographic subgroup outcome tracking for disease and economic outcomes
+* Demographic and geographic subgroup tracking for disease and economic outcomes
 
