@@ -108,6 +108,25 @@ class ForStarsim:
             # State/county
             cbg_idxs = pd.read_csv(f'{self.path}/pop_export/cbg_idxs.csv')
             ppl_df = ppl_df.merge(cbg_idxs, on='cbg_id', how='left')
+            # print(ppl_df['cbg_geocode'].unique())
+            ppl_df['state'] = ppl_df['cbg_geocode'].astype(str).str[:2].replace('na','0').astype(float)
+            ppl_df['county'] = ppl_df['cbg_geocode'].astype(str).str[:5].replace('na','0').astype(float)
+            # print(ppl_df['cbg_geocode'].dtype)
+            # ppl_df['cbg'] = ppl_df['cbg_geocode'].astype(float).astype(str).str[:12].replace('na','0').astype(float)
+            # print(len(ppl_df['cbg'].unique()))
+            
+            # Income category and disease vulnerability
+            # Income, 1 is <=40k, 2 is >40k, 0 is null/not commuter
+            # ppl_df['ses'] = ppl_df['commuter_income_category'].fillna(0.0)
+            ppl_df.loc[ppl_df['commuter'] == 1, 'ses'] = ppl_df['commuter_income_category'].fillna(0.0)
+            
+            # Disease vulnerability, 1 is <= age 65, 2 is > age 65, 0 is null/no age data
+            ppl_df.loc[ppl_df['age'] <= 65, 'vul'] = 1.0
+            ppl_df.loc[ppl_df['age'] >  65, 'vul'] = 2.0
+            ppl_df['age'] = ppl_df['age'].fillna(0.0)
+            
+            # Export to csv
+            ppl_df.to_csv(f'{self.path}/pop_export/people_all.csv', index=False)
             
             # Create Starsim states
             age = ss.FloatArr('age', default=ss.BaseArr(ppl_df['age'].values))
@@ -115,11 +134,17 @@ class ForStarsim:
             agegroup = ss.FloatArr('agegroup', default=ss.BaseArr(ppl_df['agegroup'].values))
             race = ss.FloatArr('race', default=ss.BaseArr(ppl_df['race'].values))
             cbg_id = ss.FloatArr('cbg_id', default=ss.BaseArr(ppl_df['cbg_id'].values))
-            working = ss.FloatArr('working', default=ss.BaseArr(ppl_df['working'].values))
+            state = ss.FloatArr('state', default=ss.BaseArr(ppl_df['state'].values))
+            county = ss.FloatArr('county', default=ss.BaseArr(ppl_df['county'].values))
+            wrk = ss.FloatArr('wrk', default=ss.BaseArr(ppl_df['commuter'].values)) # only commuters have income categories
+            worker = ss.FloatArr('worker', default=ss.BaseArr(ppl_df['commuter'].values)) # only commuters have income categories
             student = ss.FloatArr('student', default=ss.BaseArr(ppl_df['student'].values))
+            ses = ss.FloatArr('ses', default=ss.BaseArr(ppl_df['ses'].values))
+            vul = ss.FloatArr('vul', default=ss.BaseArr(ppl_df['vul'].values))
+            hsl = ss.FloatArr('hsl', default=np.random.choice([0.0, 1.0,2.0], size=len(ppl_df), p=[1/3, 1/3, 1/3]))
             
             # Create the people object
-            self.ppl = ss.People(n_agents=len(ppl_df), extra_states=[agegroup, race, cbg_id, working, student])
+            self.ppl = ss.People(n_agents=len(ppl_df), extra_states=[agegroup, race, cbg_id, state, county, wrk, worker, ses, vul, hsl])
             
             # Add the age state to the existing people object 
             self.ppl.states.append(age, overwrite=True)
@@ -140,11 +165,12 @@ class ForStarsim:
             print("Starsim People object created and saved successfully")
     
     class SubgroupTracking(ss.Analyzer):
-        def __init__(self, subgroup, outcome, name=None, *args, **kwargs):
+        def __init__(self, subgroup, outcome, name=None, state_id=None, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.has_product = False 
             self.subgroup = subgroup  # Store the subgroup parameter
             self.outcome = outcome  # Store the outcome parameter
+            self.state_id = state_id
             self.n_outcome = {}  # Initialize empty dict, will be populated in step()
             if name:
                 self.name = name  # Set the name for ndict key generation
@@ -157,13 +183,22 @@ class ForStarsim:
             if not self.n_outcome:
                 groups = np.unique(sim.people[self.subgroup])
                 self.n_outcome = {group: [] for group in groups}
-            
+                
+            # Automatically get disease name from the first disease in sim
+            # In starsim, diseases are accessible via their name attribute
+            disease_name = sim.diseases[0].name.lower()  # Get name and convert to lowercase
+            # Get the disease object dynamically using getattr
+            disease_obj = getattr(sim.people, disease_name, None)
+                
             # Count n_outcome by subgroup each time step using loop
             for group in self.n_outcome.keys():
-                count = len(ss.uids((sim.people[self.subgroup] == group) & (sim.people.sir[self.outcome] == 1)))
+                if self.state_id is not None:
+                    count = len(ss.uids((sim.people[self.subgroup] == group) & (disease_obj[self.outcome] == 1) & (sim.people.state == self.state_id)))
+                else:
+                    count = len(ss.uids((sim.people[self.subgroup] == group) & (disease_obj[self.outcome] == 1)))
                 self.n_outcome[group].append(count)
             return
-        
+            
         def get_subgroup_data(self):  # Renamed from get_cbg_data for clarity
             """Return a DataFrame where rows are subgroups and columns are time steps"""
             df = pd.DataFrame.from_dict(self.n_outcome, orient='index')
