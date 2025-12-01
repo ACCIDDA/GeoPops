@@ -110,7 +110,7 @@ For more realistic applications find me at the following conferences:
   * Discuss usability of each generator
 
 ### Epidemics 2025
-**Modeling the impact of dynamic decision making on infectious disease outcomes by demographic and geographic subgroups: An open-source agent-based modeling framework** (*Poster*)
+**Modeling the impact of dynamic decision making on infectious disease outcomes by demographic and geographic subgroups: An open-source agent-based modeling framework** (*[Poster](https://github.com/ACCIDDA/GeoPops/blob/main/tutorials/Epidemics/Hamilton_Epidemics_Poster.pdf)*)
 * Run Starsim COVID-19 model with utility framework on GeoPops population of MD
 * Individuals weigh health-wealth trade-offs of staying home from work as a function of their income and age
 * Test different policy scenarios (e.g., paid sick leave, cash transfer) and compare to observed data from first wave of pandemic
