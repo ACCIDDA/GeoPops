@@ -12,6 +12,10 @@ wheels/
 
 .DS_Store
 
+config.json
+
+uv.lock
+
 tutorials/MIDAS/config.json
 tutorials/MIDAS/census
 tutorials/MIDAS/geo
@@ -21,3 +25,9 @@ tutorials/MIDAS/processed
 tutorials/MIDAS/pums
 tutorials/MIDAS/school
 tutorials/MIDAS/work
+
+tutorials/WSC
+
+tutorials/Epidemics/tutorial_Epidemics.ipynb
+
+*.pptx
